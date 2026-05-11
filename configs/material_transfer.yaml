@@ -1,0 +1,55 @@
+flux_path: "black-forest-labs/FLUX.1-Fill-dev"
+dtype: "bfloat16"
+model_type: flux_fill
+
+model:
+  union_cond_attn: true
+  add_cond_attn: false
+  latent_lora: false
+  attn_mask: false
+  use_byt5_mask: false
+  device_map: "balanced"
+  offload_cpu: false
+  mask_para:
+    base_ratio: 0.6
+
+train:
+  accumulate_grad_batches: 4
+  dataloader_workers: 8
+  save_interval: 500
+  sample_interval: 1000000
+  max_steps: -1
+  max_epochs: 42
+  seed: 42
+  batch_size: 4
+  gradient_checkpointing: true
+  save_path: "runs_material_transfer_512"
+  ip_scale: 0.5
+  xlabs_ckpt_path:  "../utils/ip_adapter.safetensors"
+  reuse_lora_path: None
+
+  condition_type: "material_transfer"
+  dataset:
+    union_cond_attn: true
+    type: "material"
+    root_dir: "photos/final_dataset_train"
+    val_root_dir: "photos/final_dataset_valid" 
+    benchmark_root_dir: "photos/final_dataset_valid" 
+    material_channel: "basecolor"
+    image_size: 512 
+    drop_text_prob: 0.0
+    random_select: true  
+
+  lora_config:
+    r: 64
+    lora_alpha: 64
+    init_lora_weights: "gaussian"
+    target_modules: "(.*x_embedder|.*(?<!single_)transformer_blocks\\.[0-9]+\\.norm1\\.linear|.*(?<!single_)transformer_blocks\\.[0-9]+\\.attn\\.to_k|.*(?<!single_)transformer_blocks\\.[0-9]+\\.attn\\.to_q|.*(?<!single_)transformer_blocks\\.[0-9]+\\.attn\\.to_v|.*(?<!single_)transformer_blocks\\.[0-9]+\\.attn\\.to_out\\.0|.*(?<!single_)transformer_blocks\\.[0-9]+\\.ff\\.net\\.2|.*single_transformer_blocks\\.[0-9]+\\.norm\\.linear|.*single_transformer_blocks\\.[0-9]+\\.proj_mlp|.*single_transformer_blocks\\.[0-9]+\\.proj_out|.*single_transformer_blocks\\.[0-9]+\\.attn.to_k|.*single_transformer_blocks\\.[0-9]+\\.attn.to_q|.*single_transformer_blocks\\.[0-9]+\\.attn.to_v|.*single_transformer_blocks\\.[0-9]+\\.attn.to_out)"
+ 
+  optimizer:  
+    type: "Prodigy"
+    params:
+      lr: 1.0  
+      use_bias_correction: true
+      safeguard_warmup: true
+      weight_decay: 0.01 
